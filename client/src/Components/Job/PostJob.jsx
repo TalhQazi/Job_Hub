@@ -1,0 +1,173 @@
+import React, { useContext, useState } from "react";
+import { Context } from "../../main";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+
+function PostJob() {
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [category, setCategory] = useState("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [location, setLocation] = useState("");
+  const [salaryFrom, setSalaryFrom] = useState("");
+  const [salaryTo, setSalaryTo] = useState("");
+  const [fixedSalary, setFixedSalary] = useState("");
+  const [salaryType, setSalaryType] = useState("default");
+
+  const { isAuthorized, user } = useContext(Context);
+  const handleJobPost = async (e) => {
+    e.preventDefault();
+    if (salaryType == "FixedSalary") {
+      setSalaryFrom("");
+      setSalaryTo("");
+    } else if (salaryType == "RangedSalary") {
+      setFixedSalary("");
+    } else {
+      setSalaryFrom("");
+      setSalaryTo("");
+      setFixedSalary("");
+    }
+
+    await axios
+      .post(
+        "http://localhost:4000/api/jobs/postJob",
+        fixedSalary.length >= 4
+          ? ({title, category, country, city, location, fixedSalary,desc})
+          : ({title, category, country, city, location, salaryFrom, salaryTo,desc}),
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((res) => {
+        toast.success(res.data.message)
+        NavigateTo("/job/getall")
+      }
+        
+        )
+      .catch((err) => {
+        console.log(err);
+        toast.error(err.response.data.message)});
+  };
+
+  const NavigateTo = useNavigate();
+  if (!isAuthorized || (user && user.role !== "Employer")) {
+    NavigateTo("/");
+  }
+  return (
+    <>
+      <div className="job_post page">
+        <div className="container">
+          <h3>Post New Job</h3>
+          <form onSubmit={handleJobPost}>
+            <div className="wrapper">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Title"
+              />
+
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">Select Category</option>
+                <option value="Graphics & Design">Graphics & Design</option>
+                <option value="Mobile App Development">
+                  Mobile App Development
+                </option>
+                <option value="Frontend Web Development">
+                  Frontend Web Development
+                </option>
+                <option value="MERN Stack Development">
+                  MERN STACK Development
+                </option>
+                <option value="Account & Finance">Account & Finance</option>
+                <option value="Artificial Intelligence">
+                  Artificial Intelligence
+                </option>
+                <option value="Video Animation">Video Animation</option>
+                <option value="MEAN Stack Development">
+                  MEAN STACK Development
+                </option>
+                <option value="MERN Stack Development">
+                  MERN STACK Development
+                </option>
+                <option value="Data Entry Operator">Data Entry Operator</option>
+              </select>
+            </div>
+
+            <div className="wrapper">
+              <input
+                type="text"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                placeholder="Country"
+              />
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="City"
+              />
+            </div>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Location"
+            />
+
+            <div className="salary_wrapper">
+              <select
+                value={salaryType}
+                onChange={(e) => setSalaryType(e.target.value)}
+              >
+                <option value="default">Select Salary Type</option>
+                <option value="FixedSalary">Fixed Salary</option>
+                <option value="RangedSalary">Ranged Salary</option>
+              </select>
+
+              <div>
+                {salaryType === "default" ? (
+                  <p>Please Provide Salary Type*</p>
+                ) : salaryType == "FixedSalary" ? (
+                  <input
+                    type="number"
+                    placeholder="Enter Fixed Salary"
+                    value={fixedSalary}
+                    onChange={(e) => setFixedSalary(e.target.value)}
+                  />
+                ) : (
+                  <div className="ranged_salary">
+                    <input
+                      type="number"
+                      value={salaryFrom}
+                      onChange={(e) => setSalaryFrom(salaryFrom)}
+                      placeholder="Salary From"
+                    />
+                    <input
+                      type="number"
+                      value={salaryTo}
+                      onChange={(e) => setSalaryTo(salaryTo)}
+                      placeholder="Salary To"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Description" rows="10"></textarea>
+            <button type="submit"> Create Job </button>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default PostJob;
